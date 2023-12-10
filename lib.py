@@ -36,7 +36,7 @@ def mutation(chromosome, alphabet, rate):
 def genetics_algorithm(fitness_function, generations, mutation_rate, population_size, chromosome_length, alphabet,
                        tournament_size, chromosome_representation):
     population = initialize_population(population_size, alphabet, chromosome_length)
-    
+
     for generation in range(generations):
         new_population = []
         for _ in range(population_size):
@@ -44,12 +44,36 @@ def genetics_algorithm(fitness_function, generations, mutation_rate, population_
             child0, child1 = single_point_crossover(parent0, parent1)
             child0, child1 = mutation(child0, alphabet, mutation_rate), mutation(child1, alphabet, mutation_rate)
             new_population += [child0] + [child1]
-        
+
         population = new_population
-        
+
         best_chromosome = min(population, key=fitness_function)
         best_fitness = fitness_function(best_chromosome)
-        
+
         print(f"Generation {generation + 1}:")
         print(f"\tBest Fitness = {best_fitness}")
         print(f"\tBest Chromosome = {chromosome_representation(best_chromosome)}")
+
+
+def genetics_algorithm_with_callback(fitness_function, generations, mutation_rate, population_size, chromosome_length,
+                                     alphabet,
+                                     tournament_size, chromosome_representation, callback):
+    population = initialize_population(population_size, alphabet, chromosome_length)
+
+    for generation in range(generations):
+        new_population = []
+        for _ in range(population_size):
+            parent0, parent1 = tournament_selection(population, tournament_size, fitness_function)
+            child0, child1 = single_point_crossover(parent0, parent1)
+            child0, child1 = mutation(child0, alphabet, mutation_rate), mutation(child1, alphabet, mutation_rate)
+            new_population += [child0] + [child1]
+
+        population = new_population
+
+        best_chromosome = min(population, key=fitness_function)
+        best_fitness = fitness_function(best_chromosome)
+
+        callback(generation + 1, best_fitness, chromosome_representation(best_chromosome))
+
+def hello():
+    print("hello")
