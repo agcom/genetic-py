@@ -1,6 +1,7 @@
 import random
 import string
 import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -8,68 +9,88 @@ from lib import genetics_algorithm_with_callback
 
 random.seed(time.time())
 
-# Generate random data points
+# Generate random data points.
+
 n = 10
+dimension = 2
+min_x, max_x = 0, 10
 
-X = 0 + np.random.rand(n, 1) * 10
-y = (X @ np.array([3]).reshape((-1, 1))) + 32 + np.random.randn(n, 1)
+X = min_x + np.random.rand(n, 1) * max_x
 
+# y = 3x + 32
+target_coefficients = [3]
+target_bias = 32
+
+# The last expression (np.random.randn(n, 1)) is noise.
+y = (X @ np.array(target_coefficients).reshape(-1, 1)) + target_bias + np.random.randn(n, 1)
+
+plt.scatter(X, y)
+plt.show()
+
+# Chromosome parameters
+
+# Example coefficient chromosome: "0123451234" -> +12345.1234
 integer_points_per_variable = 5
 decimal_points_per_variable = 4
 genes_per_coefficient = integer_points_per_variable + decimal_points_per_variable + 1  # +1 for sign (+ or -)
 
+# Example chromosome (concat of some coefficient chromosomes):
+# "01234512346987654321" -> [+12345.1234, -98765.4321]
 coefficients_per_chromosome = X.shape[1] + 1  # Variables + Bias
 genes_per_chromosome = genes_per_coefficient * coefficients_per_chromosome
 
 
-def variable_coefficient_chromosome_representation(coefficient_chromosome):
+def coefficient_chromosome_representation(coefficient_chromosome):
     x = float(
-        ''.join(coefficient_chromosome[1:len(coefficient_chromosome) - decimal_points_per_variable]) + '.' + ''.join(
-            coefficient_chromosome[len(coefficient_chromosome) - decimal_points_per_variable:]))
+        ''.join(coefficient_chromosome[1:len(coefficient_chromosome) - decimal_points_per_variable]) +
+        '.' + ''.join(coefficient_chromosome[len(coefficient_chromosome) - decimal_points_per_variable:])
+    )
+
     if int(coefficient_chromosome[0]) > 5:
         x = -x
+
     return x
 
 
-def variable_chromosome_representation(chromosome):
+def chromosome_representation(chromosome):
     coefficients_chromosomes = [
         chromosome[coefficientIndex * genes_per_coefficient:(coefficientIndex + 1) * genes_per_coefficient]
-        for coefficientIndex in range(coefficients_per_chromosome)]
+        for coefficientIndex in range(coefficients_per_chromosome)
+    ]
 
-    return [variable_coefficient_chromosome_representation(coefficient_chromosome)
-            for coefficient_chromosome in coefficients_chromosomes]
-
-
-def chromosome_representation(chromosome):
-    return variable_chromosome_representation(chromosome)
+    return [
+        coefficient_chromosome_representation(coefficient_chromosome)
+        for coefficient_chromosome in coefficients_chromosomes
+    ]
 
 
 def fitness_function(chromosome):
-    coefficients = variable_chromosome_representation(chromosome)
+    coefficients = chromosome_representation(chromosome)
 
     error = 0
-    for i, x in enumerate(X):
-        y_val = y[i]
+    for x, y_val in zip(X, y):
         error += abs(((np.dot(x, coefficients[:-1]) + coefficients[-1]) - y_val)).item()
 
     return error
 
 
-best_found_chromosome = None
+best_chromosome_so_far = None
+best_chromosome_so_far_fitness = None
 
 
 def callback(generation, best_fitness, best_chromosome):
-    global best_found_chromosome
+    global best_chromosome_so_far, best_chromosome_so_far_fitness
 
-    if best_found_chromosome is None or best_fitness <= best_found_chromosome[1]:
-        best_found_chromosome = (best_chromosome, best_fitness)
+    if best_chromosome_so_far is None or best_fitness <= best_chromosome_so_far_fitness:
+        best_chromosome_so_far = best_chromosome
+        best_chromosome_so_far_fitness = best_fitness
 
-    print(f"Generation {generation}:")
+    print(f"Generation {generation + 1}:")
     print(f"\tBest Fitness = {best_fitness}")
-    print(f"\tBest Chromosome = {best_chromosome}")
+    print(f"\tBest Chromosome = {chromosome_representation(best_chromosome)}")
 
-    print(f"\tBest Chromosome So far = {best_found_chromosome[0]}")
-    print(f"\tBest Fitness So far = {best_found_chromosome[1]}")
+    print(f"\tBest Chromosome So far = {chromosome_representation(best_chromosome_so_far)}")
+    print(f"\tBest Fitness So far = {best_chromosome_so_far_fitness}")
 
 
 genetics_algorithm_with_callback(
@@ -83,6 +104,3 @@ genetics_algorithm_with_callback(
     chromosome_representation=chromosome_representation,
     callback=callback
 )
-
-plt.scatter(X, y, alpha=0.7)
-plt.show()

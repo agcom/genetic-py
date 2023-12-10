@@ -62,7 +62,7 @@ def genetics_algorithm_with_callback(fitness_function, generations, mutation_rat
 
     for generation in range(generations):
         new_population = []
-        for _ in range(population_size):
+        for _ in range(int(population_size / 2)):
             parent0, parent1 = tournament_selection(population, tournament_size, fitness_function)
             child0, child1 = single_point_crossover(parent0, parent1)
             child0, child1 = mutation(child0, alphabet, mutation_rate), mutation(child1, alphabet, mutation_rate)
@@ -73,7 +73,4 @@ def genetics_algorithm_with_callback(fitness_function, generations, mutation_rat
         best_chromosome = min(population, key=fitness_function)
         best_fitness = fitness_function(best_chromosome)
 
-        callback(generation + 1, best_fitness, chromosome_representation(best_chromosome))
-
-def hello():
-    print("hello")
+        callback(generation, best_fitness, best_chromosome)
